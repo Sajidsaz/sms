@@ -1,0 +1,37 @@
+name: PHP Build
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.0'
+    
+    - name: Process PHP files
+      run: |
+        mkdir build
+        find . -type f -name "*.php" | while read file; do
+          if [ "$file" != "./build/*" ]; then
+            directory=$(dirname "$file")
+            mkdir -p "build/$directory"
+            php "$file" > "build/${file%.php}.html"
+          fi
+        done
+        cp -R css build/ 2>/dev/null || :
+        cp -R js build/ 2>/dev/null || :
+        cp -R images build/ 2>/dev/null || :
+    
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./build
